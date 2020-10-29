@@ -4,7 +4,7 @@
    The MC-100 converter must be configured for CDC serial input and wiegand output.
 """
 
-VERSION = '0.1.0'
+VERSION = '0.1.1'
 
 import serial
 import argparse
@@ -45,9 +45,14 @@ def generate_codes(serial_device):
     for fc in range(args.facility, 255):
         for identifier in range(args.identifier, 65535):
             card_id = "{:03d}{:04d}".format(fc, identifier)
-            print(card_id)
-            card_id += "/n/r"
-            serial_device.write(card_id.encode(encoding='ascii'))
+
+            send_id = card_id + "\n\r"
+
+            try:
+                serial_device.write(send_id.encode(encoding='ascii'))
+                print(card_id)
+            except:
+                print("{} serial write error".format(card_id))
 
             if not count:
                 return
