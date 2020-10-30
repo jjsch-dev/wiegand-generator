@@ -4,23 +4,18 @@
    The MC-100 converter must be configured for CDC serial input and wiegand output.
 """
 
-VERSION = '0.1.1'
-
 import serial
 import argparse
 import time
 
 parser = argparse.ArgumentParser(description="wiegand generator for MC-100")
-parser.add_argument("--version", action="store_true", help="script version")
+parser.add_argument('--version', action='version', version='%(prog)s 0.1.2')
 parser.add_argument("-p", "--port", required=True, help="serial communication port (win = COMxxx, linux = ttyXXXX)")
 parser.add_argument("-f", "--facility", type=int, required=True, help="0 to 255")
 parser.add_argument("-i", "--identifier", type=int, required=True, help="0 to 65535")
 parser.add_argument("-c", "--count", type=int, required=True, help="times the identifier increments")
 parser.add_argument("-d", "--delay", type=int, required=True, help="delay in mS between identifiers")
 args = parser.parse_args()
-
-if args.version:
-    print("version {}".format(VERSION))
 
 
 def check_params():
