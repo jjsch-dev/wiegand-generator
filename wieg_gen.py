@@ -10,7 +10,7 @@ import time
 import platform
 
 parser = argparse.ArgumentParser(description="wiegand generator for MC-100")
-parser.add_argument('--version', action='version', version='%(prog)s 0.1.2')
+parser.add_argument('--version', action='version', version='%(prog)s 0.1.3')
 parser.add_argument("-p", "--port", required=True, help="serial communication port (win = COMxxx, linux = ttyXXXX)")
 parser.add_argument("-o", "--output", type=str, required=True, help="specify the output string format, std26 = wiegand 26-bit standard, mif32 = mifare 32-bit.")
 parser.add_argument("-f", "--facility", type=int, required=True, help="0 to 255")
