@@ -1,7 +1,11 @@
 """MC-100 wiegand generator utility.
-   It is used to generate card identifiers with the MC-100 converter in wiegand 26 format.
+   It is used to generate card identifiers with the MC-100 converter in wiegand format.
    0 to 255 for the facility code and 0 to 65535 for the user identifier.
+   The output format can be standard 26-bit or mifare 32-bit.
    The MC-100 converter must be configured for CDC serial input and wiegand output.
+   NOTE: for generate win32 use: WINEARCH=win32 WINEPREFIX=~/win32 wine pyinstaller.exe --onefile xml_datetime.py
+      for run win32: WINEARCH=win32 WINEPREFIX=~/win32 sudo wine ./xml_datetime.exe
+
 """
 
 import serial
