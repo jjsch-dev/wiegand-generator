@@ -7,6 +7,7 @@
 import serial
 import argparse
 import time
+import platform
 
 parser = argparse.ArgumentParser(description="wiegand generator for MC-100")
 parser.add_argument('--version', action='version', version='%(prog)s 0.1.2')
@@ -58,6 +59,9 @@ def generate_codes(serial_device):
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+    print("\nos: {} - arch: {} - cpu: {}\n".format(platform.system(),
+                                                   platform.architecture(),
+                                                   platform.processor()))
     if check_params():
         device = open_port()
         if device:
