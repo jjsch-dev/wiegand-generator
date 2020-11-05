@@ -12,10 +12,11 @@ import serial
 import argparse
 import time
 import platform
+import os
 
 parser = argparse.ArgumentParser(description="wiegand generator for MC-100")
-parser.add_argument('--version', action='version', version='%(prog)s 0.1.3')
-parser.add_argument("-p", "--port", required=True, help="serial communication port (win = COMxxx, linux = ttyXXXX)")
+parser.add_argument('--version', action='version', version='%(prog)s 0.1.4')
+parser.add_argument("-p", "--port", required=True, help="serial communication port (win = COMxxx, linux = ttyXXXX, file = *.txt)")
 parser.add_argument("-o", "--output", type=str, required=True, help="specify the output string format, std26 = wiegand 26-bit standard, mif32 = mifare 32-bit.")
 parser.add_argument("-f", "--facility", type=int, required=True, help="0 to 255")
 parser.add_argument("-i", "--identifier", type=int, required=True, help="0 to 65535")
@@ -24,10 +25,15 @@ parser.add_argument("-d", "--delay", type=int, required=True, help="delay in mS 
 args = parser.parse_args()
 
 id_len = 0
+is_serial = True
 
 
 def check_params():
-    global id_len
+    global id_len, is_serial
+
+    file_name, file_extension = os.path.splitext(args.port)
+
+    is_serial = False if file_extension == '.txt' else True
 
     if 'std26' == args.output:
         id_len = 0xFFFF
@@ -46,20 +52,22 @@ def check_params():
 
 
 def open_port():
-    if args.port == "disabled":
-        return args.port
-
-    try:
-        return serial.Serial(args.port, "115200", 8, 'N', 1, timeout=1)
-    except:
-        return None
+    if is_serial:
+        try:
+            return serial.Serial(args.port, "115200", 8, 'N', 1, timeout=1)
+        except:
+            return None
+    else:
+        try:
+            return open(args.port, 'w')
+        except FileNotFoundError:
+            return None
 
 
 def close_port(serial_device):
-    if serial_device != "disabled":
-        try:
-            serial_device.close()
-        except: pass
+    try:
+        serial_device.close()
+    except: pass
 
 
 def generate_codes(serial_device):
@@ -78,11 +86,14 @@ def generate_codes(serial_device):
             send_id = card_id + "\n\r"
 
             try:
-                if serial_device != "disabled":
+                if is_serial:
                     serial_device.write(send_id.encode(encoding='ascii'))
+                else:
+                    serial_device.write(card_id + "\n")
                 print(card_id)
             except:
-                print("{} serial write error".format(card_id))
+                print("{} {} write error".format(card_id,
+                                                 'serial' if is_serial else 'file'))
 
             if not count:
                 return
@@ -102,6 +113,6 @@ if __name__ == '__main__':
             generate_codes(device)
             close_port(device)
         else:
-            print("Can't open the serial port")
+            print("Can't open the {}".format('serial port' if is_serial else 'file'))
     else:
         parser.print_help()
