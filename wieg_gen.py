@@ -14,8 +14,8 @@ import time
 import platform
 import os
 
-parser = argparse.ArgumentParser(description="wiegand generator for MC-100")
-parser.add_argument('--version', action='version', version='%(prog)s 0.1.4')
+parser = argparse.ArgumentParser(description="wiegand generator for MC-100 or file")
+parser.add_argument('--version', action='version', version='%(prog)s 0.1.5')
 parser.add_argument("-p", "--port", required=True, help="serial communication port (win = COMxxx, linux = ttyXXXX, file = *.txt)")
 parser.add_argument("-o", "--output", type=str, required=True, help="specify the output string format, std26 = wiegand 26-bit standard, mif32 = mifare 32-bit.")
 parser.add_argument("-f", "--facility", type=int, required=True, help="0 to 255")
@@ -62,6 +62,8 @@ def open_port():
             return open(args.port, 'w')
         except FileNotFoundError:
             return None
+        except PermissionError:
+            return None
 
 
 def close_port(serial_device):
@@ -79,7 +81,7 @@ def generate_codes(serial_device):
         for identifier in range(args.identifier, id_len):
 
             if args.output == 'std26':
-                card_id = "{:03d}{:04d}".format(fc, identifier)
+                card_id = "{:03d}{:05d}".format(fc, identifier)
             else:
                 card_id = "{:010d}".format(identifier)
 
