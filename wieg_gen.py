@@ -13,9 +13,10 @@ import argparse
 import time
 import platform
 import os
+import progressbar
 
 parser = argparse.ArgumentParser(description="wiegand generator for MC-100 or file")
-parser.add_argument('--version', action='version', version='%(prog)s 0.1.5')
+parser.add_argument('--version', action='version', version='%(prog)s 0.1.6')
 parser.add_argument("-p", "--port", required=True, help="serial communication port (win = COMxxx, linux = ttyXXXX, file = *.txt)")
 parser.add_argument("-o", "--output", type=str, required=True, help="specify the output string format, std26 = wiegand 26-bit standard, mif32 = mifare 32-bit.")
 parser.add_argument("-f", "--facility", type=int, required=True, help="0 to 255")
@@ -75,7 +76,16 @@ def close_port(serial_device):
 def generate_codes(serial_device):
     global id_len
 
-    count = args.count
+    count = 0
+
+    print("{} {} "
+          "identifiers in {} format "
+          "starting at facility : {} "
+          "and identifier : {}\n".format("send by serial" if is_serial else "generates a file of",
+                                         args.count, args.output, args.facility, args.identifier))
+
+    bar = progressbar.ProgressBar(max_value=args.count, prefix='send serial' if is_serial else 'made file ')
+    bar.start(init=True)
 
     for fc in range(args.facility, 255):
         for identifier in range(args.identifier, id_len):
@@ -92,19 +102,22 @@ def generate_codes(serial_device):
                     serial_device.write(send_id.encode(encoding='ascii'))
                 else:
                     serial_device.write(card_id + "\n")
-                print(card_id)
+                #print(card_id)
+                bar.update(count)
             except:
                 print("{} {} write error".format(card_id,
                                                  'serial' if is_serial else 'file'))
 
-            if not count:
+            count += 1
+
+            if args.count <= count:
+                bar.finish()
                 return
-            count -= 1
 
             time.sleep(args.delay/1000)
+    bar.finish()
 
-
-# Press the green button in the gutter to run the script.
+# Main script.
 if __name__ == '__main__':
     print("\nos: {} - arch: {} - cpu: {}\n".format(platform.system(),
                                                    platform.architecture(),
