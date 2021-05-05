@@ -17,12 +17,13 @@ import progressbar
 
 parser = argparse.ArgumentParser(description="wiegand generator for MC-100 or file")
 parser.add_argument('--version', action='version', version='%(prog)s 0.1.7')
-parser.add_argument("-p", "--port", required=True, help="serial communication port (win = COMxxx, linux = ttyXXXX, file = *.txt)")
+parser.add_argument("-p", "--port", nargs='+', required=True, help="serial communication port (win = COMxxx, linux = ttyXXXX, file = *.txt, accept port list: com1 com2 ...)")
 parser.add_argument("-o", "--output", type=str, required=True, help="specify the output string format, std26 = wiegand 26-bit standard, mif32 = mifare 32-bit.")
 parser.add_argument("-f", "--facility", type=int, required=True, help="0 to 255")
 parser.add_argument("-i", "--identifier", type=int, required=True, help="0 to 65535")
 parser.add_argument("-c", "--count", type=int, required=True, help="times the identifier increments")
 parser.add_argument("-d", "--delay", type=int, required=True, help="delay in mS between identifiers")
+parser.add_argument("-t", "--port_delay", type=int, help="delay in uS between ports", default=0)
 args = parser.parse_args()
 
 id_len = 0
@@ -32,7 +33,7 @@ is_serial = True
 def check_params():
     global id_len, is_serial
 
-    file_name, file_extension = os.path.splitext(args.port)
+    file_name, file_extension = os.path.splitext(args.port[0])
 
     is_serial = False if file_extension == '.txt' else True
 
@@ -55,25 +56,30 @@ def check_params():
 def open_port():
     if is_serial:
         try:
-            return serial.Serial(args.port, "115200", 8, 'N', 1, timeout=1)
+            devices = []
+            for port in args.port:
+                devices.append(serial.Serial(port, "115200", 8, 'N', 1, timeout=1))
+
+            return devices
         except:
             return None
     else:
         try:
-            return open(args.port, 'w')
+            return open(args.port[0], 'w')
         except FileNotFoundError:
             return None
         except PermissionError:
             return None
 
 
-def close_port(serial_device):
+def close_port(devices):
     try:
-        serial_device.close()
+        for serial_device in devices:
+            serial_device.close()
     except: pass
 
 
-def generate_codes(serial_device):
+def generate_codes(devices):
     global id_len
 
     count = 0
@@ -89,7 +95,7 @@ def generate_codes(serial_device):
 
     for fc in range(args.facility, 255):
         for identifier in range(args.identifier, id_len):
-
+            id_delay_ms = args.delay
             if args.output == 'std26':
                 card_id = "{:03d}{:05d}".format(fc, identifier)
             else:
@@ -99,9 +105,13 @@ def generate_codes(serial_device):
 
             try:
                 if is_serial:
-                    serial_device.write(send_id.encode(encoding='ascii'))
+                    for serial_device in devices:
+                        serial_device.write(send_id.encode(encoding='ascii'))
+                        if index == 0:
+                            time.sleep(args.port_delay/1000000)
+                            id_delay_ms -= args.port_delay/1000
                 else:
-                    serial_device.write(card_id + "\n")
+                    devices[0].write(card_id + "\n")
 
                 bar.update(count)
             except:
@@ -114,7 +124,7 @@ def generate_codes(serial_device):
                 bar.finish()
                 return
 
-            time.sleep(args.delay/1000)
+            time.sleep(id_delay_ms/1000)
     bar.finish()
 
 
