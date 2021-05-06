@@ -16,7 +16,7 @@ import os
 import progressbar
 
 parser = argparse.ArgumentParser(description="wiegand generator for MC-100 or file")
-parser.add_argument('--version', action='version', version='%(prog)s 0.1.7')
+parser.add_argument('--version', action='version', version='%(prog)s 0.1.8')
 parser.add_argument("-p", "--port", nargs='+', required=True, help="serial communication port (win = COMxxx, linux = ttyXXXX, file = *.txt, accept port list: com1 com2 ...)")
 parser.add_argument("-o", "--output", type=str, required=True, help="specify the output string format, std26 = wiegand 26-bit standard, mif32 = mifare 32-bit.")
 parser.add_argument("-f", "--facility", type=int, required=True, help="0 to 255")
@@ -105,7 +105,7 @@ def generate_codes(devices):
 
             try:
                 if is_serial:
-                    for serial_device in devices:
+                    for index, serial_device in enumerate(devices):
                         serial_device.write(send_id.encode(encoding='ascii'))
                         if index == 0:
                             time.sleep(args.port_delay/1000000)
